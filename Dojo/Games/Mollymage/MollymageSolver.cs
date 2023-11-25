@@ -22,6 +22,68 @@
 
 namespace Dojo.Games.Mollymage
 {
+    public enum Direction
+    {
+        Right, Left, Up, Down
+    }
+    public class Hero
+    {
+        public MollymageBoard Board { get; set; }
+        public Hero(MollymageBoard board)
+        {
+            Board = board;
+        }
+
+        public Point GetCurrentPosition()
+        {
+            var hx = Board.GetHero().X;
+            var hy = Board.GetHero().Y;
+
+            return new Point(hx, hy);
+        }
+
+        public MollymageElement GetNearElement(Direction direction)
+        {
+            var currentPosition = GetCurrentPosition();
+
+            switch (direction)
+            {
+                case Direction.Left:
+                    return Board.GetAt(new Point(currentPosition.X - 1, currentPosition.Y));
+                case Direction.Right:
+                    return Board.GetAt(new Point(currentPosition.X + 1, currentPosition.Y));
+                case Direction.Up:
+                    return Board.GetAt(new Point(currentPosition.X, currentPosition.Y + 1));
+                case Direction.Down:
+                    return Board.GetAt(new Point(currentPosition.X, currentPosition.Y - 1));
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+        public List<MollymageElement> GoodElements()
+        {
+            return new List<MollymageElement>()
+            {
+                MollymageElement.TREASURE_BOX,
+                MollymageElement.NONE
+            };
+        }
+        public string Move()
+        {
+            foreach (Direction direction in Enum.GetValues(typeof(Direction)))
+            {
+                var nextMove = GetNearElement(direction);
+
+                if (nextMove == MollymageElement.NONE || nextMove == MollymageElement.TREASURE_BOX)
+                {
+                    return MollymageCommand.MOVE_RIGHT_THEN_DROP_POTION;
+                }
+            }
+
+            return MollymageCommand.DROP_POTION;
+        }
+
+    }
     /// <summary>
     /// This is HeroAI client demo.
     /// </summary>
@@ -33,11 +95,10 @@ namespace Dojo.Games.Mollymage
         }
 
         private string Get(MollymageBoard gameBoard)
-        {
-
-            // TODO your code here
-
-            return MollymageCommand.DROP_POTION;
+        {         
+            var hero = new Hero(gameBoard);
+               
+            return hero.Move();
         }
     }
 }
