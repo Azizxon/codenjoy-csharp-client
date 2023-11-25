@@ -24,6 +24,7 @@ namespace Dojo.Games.Mollymage
 {
     public class MollymageCommand
     {
+        public static string None = "NONE";
         public static string LEFT = "LEFT";
         public static string RIGHT = "RIGHT";
         public static string UP = "UP";

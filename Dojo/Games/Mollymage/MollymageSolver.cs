@@ -20,11 +20,17 @@
  * #L%
  */
 
+using System.Xml.Linq;
+
 namespace Dojo.Games.Mollymage
 {
     public enum Direction
     {
-        Right, Left, Up, Down
+        None,
+        Right,
+        Left,
+        Up,
+        Down
     }
     public class Hero
     {
@@ -42,22 +48,24 @@ namespace Dojo.Games.Mollymage
             return new Point(hx, hy);
         }
 
-        public MollymageElement GetNearElement(Direction direction)
+        public MollymageElement GetNearElement(Direction direction, Point currentPosition)
         {
-            var currentPosition = GetCurrentPosition();
-
+           return Board.GetAt(GetNextMove(direction, currentPosition));
+        }
+        public Point GetNextMove(Direction direction, Point currentPosition)
+        {
             switch (direction)
             {
                 case Direction.Left:
-                    return Board.GetAt(new Point(currentPosition.X - 1, currentPosition.Y));
+                    return new Point(currentPosition.X - 1, currentPosition.Y);
                 case Direction.Right:
-                    return Board.GetAt(new Point(currentPosition.X + 1, currentPosition.Y));
+                    return new Point(currentPosition.X + 1, currentPosition.Y);
                 case Direction.Up:
-                    return Board.GetAt(new Point(currentPosition.X, currentPosition.Y + 1));
+                    return new Point(currentPosition.X, currentPosition.Y + 1);
                 case Direction.Down:
-                    return Board.GetAt(new Point(currentPosition.X, currentPosition.Y - 1));
+                    return new Point(currentPosition.X, currentPosition.Y - 1);
                 default:
-                    throw new NotImplementedException();
+                    return currentPosition;
             }
         }
         public List<MollymageElement> GoodElements()
@@ -68,19 +76,76 @@ namespace Dojo.Games.Mollymage
                 MollymageElement.NONE
             };
         }
-        public string Move()
-        {
-            foreach (Direction direction in Enum.GetValues(typeof(Direction)))
-            {
-                var nextMove = GetNearElement(direction);
 
-                if (nextMove == MollymageElement.NONE || nextMove == MollymageElement.TREASURE_BOX)
-                {
-                    return MollymageCommand.MOVE_RIGHT_THEN_DROP_POTION;
+        public bool IsDamagePotion(MollymageElement nextMove) =>
+    nextMove == MollymageElement.POTION_EXPLODER || nextMove == MollymageElement.POTION_TIMER_4 ||
+    nextMove == MollymageElement.POTION_TIMER_3 || nextMove == MollymageElement.POTION_TIMER_2 ||
+    nextMove == MollymageElement.POTION_TIMER_1 || nextMove == MollymageElement.POTION_IMMUNE ||
+    nextMove == MollymageElement.POTION_COUNT_INCREASE || nextMove == MollymageElement.POTION_TIMER_5 ||
+    nextMove == MollymageElement.POTION_REMOTE_CONTROL || nextMove == MollymageElement.POISON_THROWER ||
+    nextMove == MollymageElement.HERO_POTION || nextMove == MollymageElement.OTHER_HERO_POTION ||
+    nextMove == MollymageElement.ENEMY_HERO_POTION || nextMove == MollymageElement.POTION_BLAST_RADIUS_INCREASE;
+
+        public bool IsNextFiveMovesSafe(Direction direction)
+        {
+            var currentPosition = GetCurrentPosition();
+            var moves = new List<MollymageElement>();
+            for (var i = 0; i < 5; i++)
+            {
+                var move = GetNearElement(direction, currentPosition);
+                moves.Add(move);
+                switch (direction) {
+                    case Direction.Left:
+                        currentPosition = new Point(currentPosition.X - 1, currentPosition.Y);
+                        break;
+                    case Direction.Right:
+                        currentPosition = new Point(currentPosition.X + 1, currentPosition.Y); break;
+                    case Direction.Up:
+                        currentPosition = new Point(currentPosition.X, currentPosition.Y + 1); break;
+                    case Direction.Down:
+                        currentPosition = new Point(currentPosition.X, currentPosition.Y - 1); break;
+                    default:
+                        throw new NotImplementedException();
                 }
             }
 
-            return MollymageCommand.DROP_POTION;
+            return moves.All(move=>move == MollymageElement.NONE || move == MollymageElement.POTION_IMMUNE || move == MollymageElement.POTION_REMOTE_CONTROL);
+        }
+
+        public string Move()
+        {
+            bool isNextMoveSafe = false;
+            foreach (Direction direction in Enum.GetValues(typeof(Direction)))
+            {
+                var currentPosition = GetCurrentPosition();
+                var random = new Random();
+                var nextMoveCell = GetNearElement(direction, currentPosition);
+                var nextMove = GetNextMove(direction, currentPosition);
+                var futureBlasts = Board.GetFutureBlasts();
+                isNextMoveSafe = !futureBlasts.Contains(nextMove) &&
+                                !IsDamagePotion(nextMoveCell)
+                                && (nextMoveCell == MollymageElement.NONE || nextMoveCell == MollymageElement.POTION_IMMUNE || nextMoveCell == MollymageElement.POTION_REMOTE_CONTROL);
+
+
+                if (isNextMoveSafe)
+                {
+                    switch (direction)
+                    {
+                        case Direction.Right:
+                            return MollymageCommand.DROP_POTION_THEN_MOVE_RIGHT;
+                        case Direction.Left:
+                            return MollymageCommand.DROP_POTION_THEN_MOVE_LEFT;
+                        case Direction.Up:
+                            return MollymageCommand.DROP_POTION_THEN_MOVE_UP;
+                        case Direction.Down:
+                            return MollymageCommand.DROP_POTION_THEN_MOVE_DOWN;
+                        default:
+                            return MollymageCommand.None;
+                    }
+                }
+            }
+
+            return MollymageCommand.None;
         }
 
     }

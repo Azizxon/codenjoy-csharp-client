@@ -151,7 +151,7 @@ namespace Dojo.Games.Mollymage
 
         public List<Point> GetFutureBlasts()
         {
-            var potions = Get(MollymageElement.POTION_TIMER_1);
+            var potions = Get(MollymageElement.POTION_TIMER_1, MollymageElement.POTION_TIMER_2);
             var result = new List<Point>();
             foreach (var potion in potions)
             {
@@ -160,6 +160,11 @@ namespace Dojo.Games.Mollymage
                 result.Add(potion.ShiftRight());
                 result.Add(potion.ShiftTop());
                 result.Add(potion.ShiftBottom());
+
+                result.Add(potion.ShiftLeft().ShiftLeft());
+                result.Add(potion.ShiftRight().ShiftRight());
+                result.Add(potion.ShiftTop().ShiftTop());
+                result.Add(potion.ShiftBottom().ShiftBottom());
             }
 
             return result.Where(blast => !blast.IsOutOf(Size) && !GetBarrier().Contains(blast)).Distinct().ToList();
