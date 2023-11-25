@@ -50,7 +50,7 @@ namespace Dojo.Games.Mollymage
 
         public MollymageElement GetNearElement(Direction direction, Point currentPosition)
         {
-           return Board.GetAt(GetNextMove(direction, currentPosition));
+            return Board.GetAt(GetNextMove(direction, currentPosition));
         }
         public Point GetNextMove(Direction direction, Point currentPosition)
         {
@@ -94,7 +94,8 @@ namespace Dojo.Games.Mollymage
             {
                 var move = GetNearElement(direction, currentPosition);
                 moves.Add(move);
-                switch (direction) {
+                switch (direction)
+                {
                     case Direction.Left:
                         currentPosition = new Point(currentPosition.X - 1, currentPosition.Y);
                         break;
@@ -109,7 +110,7 @@ namespace Dojo.Games.Mollymage
                 }
             }
 
-            return moves.All(move=>move == MollymageElement.NONE || move == MollymageElement.POTION_IMMUNE || move == MollymageElement.POTION_REMOTE_CONTROL);
+            return moves.All(move => move == MollymageElement.NONE || move == MollymageElement.POTION_IMMUNE || move == MollymageElement.POTION_REMOTE_CONTROL);
         }
 
         public string Move()
@@ -121,30 +122,47 @@ namespace Dojo.Games.Mollymage
                 var random = new Random();
                 var nextMoveCell = GetNearElement(direction, currentPosition);
                 var nextMove = GetNextMove(direction, currentPosition);
+                var treasureBoxes = Board.Get(MollymageElement.TREASURE_BOX);
                 var futureBlasts = Board.GetFutureBlasts();
                 isNextMoveSafe = !futureBlasts.Contains(nextMove) &&
                                 !IsDamagePotion(nextMoveCell)
                                 && (nextMoveCell == MollymageElement.NONE || nextMoveCell == MollymageElement.POTION_IMMUNE || nextMoveCell == MollymageElement.POTION_REMOTE_CONTROL);
 
-
                 if (isNextMoveSafe)
                 {
-                    switch (direction)
-                    {
-                        case Direction.Right:
-                            return MollymageCommand.DROP_POTION_THEN_MOVE_RIGHT;
-                        case Direction.Left:
-                            return MollymageCommand.DROP_POTION_THEN_MOVE_LEFT;
-                        case Direction.Up:
-                            return MollymageCommand.DROP_POTION_THEN_MOVE_UP;
-                        case Direction.Down:
-                            return MollymageCommand.DROP_POTION_THEN_MOVE_DOWN;
-                        default:
-                            return MollymageCommand.None;
-                    }
-                }
-            }
+                    var blastPoints = Board.GetPotionBlastPoints(currentPosition);
+                    bool currentPositionHasBoxes = blastPoints.Any(x => Board.GetTreasureBox().Contains(x));
 
+                    if (currentPositionHasBoxes)
+                    {
+                        switch (direction)
+                        {
+                            case Direction.Right:
+                                return MollymageCommand.DROP_POTION_THEN_MOVE_RIGHT;
+                            case Direction.Left:
+                                return MollymageCommand.DROP_POTION_THEN_MOVE_LEFT;
+                            case Direction.Up:
+                                return MollymageCommand.DROP_POTION_THEN_MOVE_UP;
+                            case Direction.Down:
+                                return MollymageCommand.DROP_POTION_THEN_MOVE_DOWN;
+                        }
+                    }
+                    else
+                    {
+                        switch (direction)
+                        {
+                            case Direction.Right:
+                                return MollymageCommand.MOVE_RIGHT_THEN_DROP_POTION;
+                            case Direction.Left:
+                                return MollymageCommand.MOVE_LEFT_THEN_DROP_POTION;
+                            case Direction.Up:
+                                return MollymageCommand.MOVE_UP_THEN_DROP_POTION;
+                            case Direction.Down:
+                                return MollymageCommand.MOVE_DOWN_THEN_DROP_POTION;
+                        }
+                    }
+                }                
+            }
             return MollymageCommand.None;
         }
 
@@ -160,9 +178,9 @@ namespace Dojo.Games.Mollymage
         }
 
         private string Get(MollymageBoard gameBoard)
-        {         
+        {
             var hero = new Hero(gameBoard);
-               
+
             return hero.Move();
         }
     }

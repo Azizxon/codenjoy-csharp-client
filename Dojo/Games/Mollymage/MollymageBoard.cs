@@ -155,6 +155,35 @@ namespace Dojo.Games.Mollymage
             var result = new List<Point>();
             foreach (var potion in potions)
             {
+                result.AddRange(GetPotionBlastPoints(potion));
+            }
+
+            return result.Where(blast => !blast.IsOutOf(Size) && !GetBarrier().Contains(blast)).Distinct().ToList();
+        }
+
+        public List<Point> GetPotionBlastPoints(Point potion)
+        {
+            var result = new List<Point>();
+
+            result.Add(potion);
+            result.Add(potion.ShiftLeft());
+            result.Add(potion.ShiftRight());
+            result.Add(potion.ShiftTop());
+            result.Add(potion.ShiftBottom());
+
+            result.Add(potion.ShiftLeft().ShiftLeft());
+            result.Add(potion.ShiftRight().ShiftRight());
+            result.Add(potion.ShiftTop().ShiftTop());
+            result.Add(potion.ShiftBottom().ShiftBottom());
+            return result;
+        }
+
+        public List<Point> GetTreasureBox()
+        {
+            var potions = Get(MollymageElement.TREASURE_BOX);
+            var result = new List<Point>();
+            foreach (var potion in potions)
+            {
                 result.Add(potion);
                 result.Add(potion.ShiftLeft());
                 result.Add(potion.ShiftRight());
@@ -169,6 +198,7 @@ namespace Dojo.Games.Mollymage
 
             return result.Where(blast => !blast.IsOutOf(Size) && !GetBarrier().Contains(blast)).Distinct().ToList();
         }
+
 
         public bool IsBarrierAt(Point point)
         {
